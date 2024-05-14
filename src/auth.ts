@@ -1,18 +1,18 @@
-import { PostgresJsAdapter } from "@lucia-auth/adapter-postgresql";
+import { NodePostgresAdapter } from "@lucia-auth/adapter-postgresql";
 import Elysia, { t } from "elysia";
 import { Lucia, type Session, type User } from "lucia";
-import postgres, { type Sql } from "postgres";
-import { createUser, getUser } from "./db/query_sql";
+import { Pool } from "pg";
+import { createUser, getUserByEmail } from "./db/query_sql";
 
-const sql = postgres({
+const pool = new Pool({
 	host: process.env.POSTGRES_HOST,
 	port: Number(process.env.POSTGRES_PORT) || undefined,
-	username: process.env.POSTGRES_USERNAME,
+	user: process.env.POSTGRES_USERNAME,
 	password: process.env.POSTGRES_PASSWORD,
 	database: process.env.POSTGRES_DATABASE,
 });
 
-const adapter = new PostgresJsAdapter(sql, {
+const adapter = new NodePostgresAdapter(pool, {
 	user: "user",
 	session: "user_session",
 });
@@ -103,7 +103,7 @@ export const auth = new Elysia({ name: "auth" })
 			app
 				.post("/sign-up", async ({ body, cookie, set }) => {
 					const passwordHash = await Bun.password.hash(body.password);
-					const user = await createUser(sql, {
+					const user = await createUser(pool, {
 						email: body.email,
 						passwordHash: passwordHash,
 					}).catch((err: Error) => err);
@@ -120,7 +120,7 @@ export const auth = new Elysia({ name: "auth" })
 					return "Sign up is completed!";
 				})
 				.post("/sign-in", async ({ body, cookie, set }) => {
-					const user = await getUser(sql, { email: body.email });
+					const user = await getUserByEmail(pool, { email: body.email });
 					if (!user) {
 						set.status = "Bad Request";
 						return "Invalid email or password";

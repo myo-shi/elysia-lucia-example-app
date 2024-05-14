@@ -1,11 +1,15 @@
-import { Sql } from "postgres";
+import { QueryArrayConfig, QueryArrayResult } from "pg";
+
+interface Client {
+    query: (config: QueryArrayConfig) => Promise<QueryArrayResult>;
+}
 
 export const getUserQuery = `-- name: GetUser :one
 SELECT id, email, password_hash FROM "user"
-WHERE email = $1 LIMIT 1`;
+WHERE id = $1 LIMIT 1`;
 
 export interface GetUserArgs {
-    email: string;
+    id: number;
 }
 
 export interface GetUserRow {
@@ -14,12 +18,47 @@ export interface GetUserRow {
     passwordHash: string;
 }
 
-export async function getUser(sql: Sql, args: GetUserArgs): Promise<GetUserRow | null> {
-    const rows = await sql.unsafe(getUserQuery, [args.email]).values();
-    if (rows.length !== 1) {
+export async function getUser(client: Client, args: GetUserArgs): Promise<GetUserRow | null> {
+    const result = await client.query({
+        text: getUserQuery,
+        values: [args.id],
+        rowMode: "array"
+    });
+    if (result.rows.length !== 1) {
         return null;
     }
-    const row = rows[0];
+    const row = result.rows[0];
+    return {
+        id: row[0],
+        email: row[1],
+        passwordHash: row[2]
+    };
+}
+
+export const getUserByEmailQuery = `-- name: GetUserByEmail :one
+SELECT id, email, password_hash FROM "user"
+WHERE email = $1 LIMIT 1`;
+
+export interface GetUserByEmailArgs {
+    email: string;
+}
+
+export interface GetUserByEmailRow {
+    id: number;
+    email: string;
+    passwordHash: string;
+}
+
+export async function getUserByEmail(client: Client, args: GetUserByEmailArgs): Promise<GetUserByEmailRow | null> {
+    const result = await client.query({
+        text: getUserByEmailQuery,
+        values: [args.email],
+        rowMode: "array"
+    });
+    if (result.rows.length !== 1) {
+        return null;
+    }
+    const row = result.rows[0];
     return {
         id: row[0],
         email: row[1],
@@ -46,12 +85,16 @@ export interface CreateUserRow {
     passwordHash: string;
 }
 
-export async function createUser(sql: Sql, args: CreateUserArgs): Promise<CreateUserRow | null> {
-    const rows = await sql.unsafe(createUserQuery, [args.email, args.passwordHash]).values();
-    if (rows.length !== 1) {
+export async function createUser(client: Client, args: CreateUserArgs): Promise<CreateUserRow | null> {
+    const result = await client.query({
+        text: createUserQuery,
+        values: [args.email, args.passwordHash],
+        rowMode: "array"
+    });
+    if (result.rows.length !== 1) {
         return null;
     }
-    const row = rows[0];
+    const row = result.rows[0];
     return {
         id: row[0],
         email: row[1],
