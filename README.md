@@ -33,3 +33,8 @@ docker run -it --rm -v ./db:/db --network=host postgres psql -h localhost -U pos
 bun i
 bun run dev
 ```
+
+## TODO
+
+- テスト書いてみる
+- Role Based Access Controlを試す([Casbin](https://casbin.org/ja/)?)
