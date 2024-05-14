@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS "user" (
+	id SERIAL PRIMARY KEY,
+	email TEXT UNIQUE NOT NULL,
+	password_hash TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_session (
+    id TEXT PRIMARY KEY,
+    expires_at TIMESTAMPTZ NOT NULL,
+    user_id INTEGER REFERENCES "user" (id)
+);

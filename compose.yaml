@@ -1,0 +1,7 @@
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
